@@ -14,7 +14,7 @@ if [[ ! -d "${dir}" ]]; then
     exit 1
 fi
 
-input=$(curl -s "https://adventofcode.com/2018/day/${day#0}/input" -H "Cookie: session=${AOC_SESSION}")
+input=$(curl -s "https://adventofcode.com/2023/day/${day#0}/input" -H "Cookie: session=${AOC_SESSION}")
 
 for subpart in 01 02; do
     subdir="${dir}/part_${subpart}"
