@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
 day="${1}"
+
+if [[ -z "${day}" ]]; then
+    echo "Usage: ${0} <day>"
+    exit 1
+fi
+
 dir="days/${day}"
 
 if [[ ! -d "${dir}" ]]; then
