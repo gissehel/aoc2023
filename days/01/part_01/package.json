@@ -1,0 +1,15 @@
+{
+  "name": "templates",
+  "version": "1.0.0",
+  "description": "Advent of Code 2023 template for challenges",
+  "main": "index.js",
+  "scripts": {
+    "new": "bash new-test.sh",
+    "test": "node ./src/tests.js",
+    "testd": "node ./src/tests.js -d",
+    "main": "node ./src/main.js"
+  },
+  "keywords": ["aoc", "aoc2023", "adventofcode", "adventofcode2023"],
+  "author": "gissehel",
+  "license": "MIT"
+}
