@@ -8,7 +8,8 @@
 const challenge = (input) => {
     const input_lines = input.split('\n').map(line => line.trim()).filter(line => line.length > 0)
     
-    return input;
+    const result = input
+    return `${result}`;
 }
 
 module.exports = challenge;
