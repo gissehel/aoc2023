@@ -3,7 +3,7 @@ const parse_input = (input_lines) => {
     const game = {}
 
     game.modules = {}
-    game.modules['button'] = { name_src: 'button', type: 'simple', dests: ['broadcaster'] }
+    game.modules['button'] = { name_src: 'button', type: 'simple', dests: {'broadcaster': true} }
 
     for (const input_line of input_lines) {
         const [src, dest] = input_line.split(' -> ')
@@ -59,6 +59,9 @@ const process = (game, state, count = 1) => {
         while (signals_to_process.length > 0) {
             const signal = signals_to_process.shift()
             const { name, value, from } = signal
+            if (name === 'cn' && value === 1) {
+                console.log(`${from} -> ${name} : ${value} [${index}]`)
+            }
             if (name === 'rx' && value === 0) {
                 return index
             }
@@ -101,6 +104,28 @@ const process = (game, state, count = 1) => {
     return null
 }
 
+const display_dot = (game) => {
+    let result = ''
+    result += 'digraph {\n'
+    result += '    rankdir=LR;\n'
+    result += '    node [shape=box];\n'
+    for (const name in game.modules) {
+        const module = game.modules[name]
+        if (module.type === "simple") {
+            result += `    ${name} [shape=ellipse];\n`
+        } else if (module.type === "flipflop") {
+            result += `    ${name} [shape=box];\n`
+        } else if (module.type === "conj") {
+            result += `    ${name} [shape=diamond];\n`
+        }
+        for (const dest_name in module.dests) {
+            result += `    ${name} -> ${dest_name};\n`
+        }
+}
+    result += '}\n'
+    console.log(result)
+}
+
 /**
  * Template challenge for AoC. Take the input as string because all inputs are always strings.
  * Return the solution as string (because all solutions are always strings).
@@ -113,7 +138,8 @@ const challenge = (input) => {
     const game = parse_input(input_lines)
     // debug({ game })
     const state = get_init_state(game)
-    const result = process(game, state, 10000000)
+    // display_dot(game)
+    const result = process(game, state, 1000000)
     return `${result}`;
 }
 
