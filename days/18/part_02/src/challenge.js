@@ -1,5 +1,13 @@
 const { debug } = require('./tools')
 
+const is_between = (x, x1, x2) => {
+    if (x1 < x2) {
+        return x >= x1 && x <= x2
+    } else {
+        return x >= x2 && x <= x1
+    }
+}
+
 const is_inside = (x, y, loop) => {
     let anglesum = 0
 
@@ -11,7 +19,15 @@ const is_inside = (x, y, loop) => {
         const x2 = coord2.x - x
         const y2 = coord2.y - y
 
+        if (is_between(x, coord1.x, coord2.x) && coord1.y === coord2.y && coord1.y === y) {
+            return true
+        }
+        if (is_between(y, coord1.y, coord2.y) && coord1.x === coord2.x && coord1.x === x) {
+            return true
+        }
+
         const vect = x1 * y2 - y1 * x2
+        const scal = x1 * x2 + y1 * y2
         let z = vect / Math.sqrt(x1 * x1 + y1 * y1) / Math.sqrt(x2 * x2 + y2 * y2)
         if (z < -1) {
             z = -1
@@ -20,7 +36,16 @@ const is_inside = (x, y, loop) => {
             z = 1
         }
 
-        anglesum += Math.asin(z)
+        let angle = Math.asin(z)
+        if (scal < 0) {
+            if (angle > 0) {
+                angle = Math.PI - angle
+            } else {
+                angle = -Math.PI - angle
+            }
+        }
+
+        anglesum += angle
     }
     const result = anglesum < -1 || anglesum > 1 ? true : false
     return result
@@ -28,35 +53,28 @@ const is_inside = (x, y, loop) => {
 
 const has_inside = (y, loop) => {
     let count = 0
-    const crosses = []
+    let crosses = []
     for (let index = 0; index < loop.length; index++) {
         const coord1 = loop[index]
         const coord2 = loop[(index + 1) % loop.length]
-        if (coord1.y === y && coord2.y === y) {
-            crosses.push({x: coord1.x, exact: true})
-            crosses.push({x: coord2.x, exact: true})
-            // count += Math.abs(coord1.x - coord2.x) - 1
-        } else if (coord1.y < y && coord2.y > y) {
-            crosses.push({x: coord1.x, exact: false})
-        } else if (coord1.y > y && coord2.y < y) {
-            crosses.push({x: coord1.x, exact: false})
-        } else if (coord1.y !== y && coord2.y === y) {
-            crosses.push({x: coord1.x, exact: true})
-        } else if (coord1.y === y && coord2.y !== y) {
-            crosses.push({x: coord1.x, exact: true})
+        if (is_between(y, coord1.y, coord2.y)) {
+            crosses.push(coord1.x)
+            crosses.push(coord2.x)
         }
-        crosses.sort((a, b) => a.x - b.x)
-        
-        while (crosses.length > 1) {
-            let cross1 = crosses.shift()
-            let cross2 = crosses.shift()
-            if (cross1.x === cross2.x) {
-                cross2 = crosses.shift()
-                crosses.shift()
-            }
-            count += Math.abs(cross1.x - cross2.x)
-            if (! cross2.exact) {
-                count += 1
+    }
+    crosses = [...new Set(crosses)]
+    crosses.sort((a, b) => a - b)
+
+    for (let index = 0; index < crosses.length; index++) {
+        const x = crosses[index];
+        count += 1
+        if (index < crosses.length - 1) {
+            const next_x = crosses[index + 1]
+            const distance = next_x - x - 1
+            if (distance > 0) {
+                if (is_inside(x + 1, y, loop)) {
+                    count += distance
+                }
             }
         }
     }
@@ -72,13 +90,10 @@ const parse_input = (input_lines) => {
         const new_distance = parseInt(color.slice(2, 7), 16)
         const new_direction = ({ 0: 'R', 1: 'D', 2: 'L', 3: 'U' })[color[7]]
         const action = { direction: new_direction, distance: new_distance }
-        // const action = { direction: direction, distance: parseInt(distance)}
         game.actions.push(action)
     }
     return game
 }
-
-const get_key = (x, y) => `${x},${y}`
 
 const directions = {
     'R': { x: 1, y: 0 },
@@ -117,8 +132,18 @@ const get_loop = (game) => {
 const find_inside = (game) => {
     let result = 0
 
-    for (let y = game.min_y; y <= game.max_y; y++) {
-        result += has_inside(y, game.loop)
+    const special_ys = game.loop.map(coord => coord.y).sort((a, b) => a - b).filter((y, index, array) => array.indexOf(y) === index)
+
+    for (let index = 0; index < special_ys.length; index++) {
+        const y = special_ys[index];
+        result += has_inside(y, game.loop, game)
+        if (index < special_ys.length - 1) {
+            const next_y = special_ys[index + 1]
+            const distance = next_y - y - 1
+            if (distance > 0) {
+                result += has_inside(y + 1, game.loop, game) * distance
+            }
+        }
     }
 
     return result
@@ -136,6 +161,7 @@ const challenge = (input) => {
     const game = parse_input(input_lines)
     get_loop(game)
     const result = find_inside(game)
+
     return `${result}`;
 }
 
