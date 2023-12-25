@@ -1,6 +1,7 @@
 const { debug } = require('./tools')
 
 const get_key = (x, y) => `${x},${y}`
+const mod = (x, n) => (x % n + n) % n
 
 const parse_input = (input_lines) => {
     const game = {}
@@ -14,9 +15,9 @@ const parse_input = (input_lines) => {
         }
         for (let x = 0; x < game.x_length; x++) {
             const char = line[x]
-            game.map[get_key(x, y)] = {x, y, char}
+            game.map[get_key(x, y)] = { x, y, char }
             if (char === 'S') {
-                game.start = {x, y}
+                game.start = { x, y }
             }
         }
     }
@@ -35,7 +36,7 @@ const display_map = (game) => {
     console.log(output)
 }
 
-const display_map_positions = (game,positions) => {
+const display_map_positions = (game, positions) => {
     let output = ''
     for (let y = 0; y < game.y_length; y++) {
         for (let x = 0; x < game.x_length; x++) {
@@ -51,26 +52,28 @@ const display_map_positions = (game,positions) => {
 }
 
 const neighbours = {
-    'N': {x: 0, y: -1},
-    'E': {x: 1, y: 0},
-    'S': {x: 0, y: 1},
-    'W': {x: -1, y: 0},
+    'N': { x: 0, y: -1 },
+    'E': { x: 1, y: 0 },
+    'S': { x: 0, y: 1 },
+    'W': { x: -1, y: 0 },
 }
 
-const mod = (x, n) => (x % n + n) % n
-
-const get_iteration = (game, positions) => {
+const get_iteration = (game, positions, next_positions_map) => {
     const next_positions = []
-    const next_positions_map = {}
+    // const next_positions_map = {}
     for (const position of positions) {
-        const item = game.map[position]
+        const { x, y, key } = position
+        const item = game.map[key]
         for (const direction in neighbours) {
-            const neighbour = game.map[get_key(mod(item.x + neighbours[direction].x, game.x_length), mod(item.y + neighbours[direction].y, game.y_length))]
-            if (neighbour && (neighbour.char === '.' || neighbour.char === 'S') ) {
-                const key = get_key(neighbour.x, neighbour.y)
+            const new_x = x + neighbours[direction].x
+            const new_y = y + neighbours[direction].y
+            const new_key = get_key(mod(new_x, game.x_length), mod(new_y, game.y_length))
+            const neighbour = game.map[new_key]
+            if (neighbour && (neighbour.char === '.' || neighbour.char === 'S')) {
+                const key = get_key(new_x, new_y)
                 if (!next_positions_map[key]) {
                     next_positions_map[key] = true
-                    next_positions.push(key)
+                    next_positions.push({ x: new_x, y: new_y, key: new_key })
                 }
             }
         }
@@ -79,11 +82,12 @@ const get_iteration = (game, positions) => {
 }
 
 const solve_positions = (game, steps) => {
-    let positions = [get_key(game.start.x, game.start.y)]
+    let positions = [{ x: game.start.x, y: game.start.y, key: get_key(game.start.x, game.start.y) }]
+    const next_positions_maps = { 0: {}, 1: {} }
     for (let i = 0; i < steps; i++) {
-        positions = get_iteration(game, positions)
+        positions = get_iteration(game, positions, next_positions_maps[i % 2])
     }
-    return positions
+    return Object.keys(next_positions_maps[(steps - 1) % 2]).length
 }
 
 /**
@@ -97,9 +101,12 @@ const challenge = (input) => {
     const input_lines = input.split('\n').map(line => line.trim()).filter(line => line.length > 0)
     const game = parse_input(input_lines)
 
-    const positions = solve_positions(game, 26501365)
+    // const positions = solve_positions(game, 1)
     // display_map_positions(game, positions)
-    const result = positions.length
+    console.log(solve_positions(game, 65 + 131*0))
+    console.log(solve_positions(game, 65 + 131*1))
+    console.log(solve_positions(game, 65 + 131*2))
+    const result = ''
     return `${result}`;
 }
 
